@@ -13,8 +13,7 @@
 - Checagem de DOM para Remotion (hoje so pelos pixels do MP4 e helpers no codigo).
 
 ## Pendente do Tiago
-- Escolher um alvo de loudness padrao (BIBLIOTECA-MOTION usa -15/-3, MODELO-PEDIDO usa -14/-2) e gravar como `--profile`.
-- Opcional: escolher outro nome se motionproof confundir (existem repositorios de outros donos com nome parecido).
+- Nada. Decisoes tomadas em 13/11: loudness -14 LUFS com pico -2 dBTP (data/targets.json) e perfil `profiles/default-vertical.json`; nome motionproof mantido (repositorios homonimos sao de outros donos).
 
 ## Armadilhas
 - Commits usam o e-mail noreply do GitHub, nao o pessoal.
