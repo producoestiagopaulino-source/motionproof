@@ -12,7 +12,7 @@ It works with any agent that reads a `SKILL.md` folder. Everything runs locally 
 
 | script | input | checks |
 |---|---|---|
-| `probe.mjs` | HTML / HyperFrames page | L1 text size, L2 WCAG contrast against the real pixels under the text, L3 platform safe zone, L4 text clipped by the frame, L5 reading time; warns on overlapping text and page chrome |
+| `probe.mjs` | HTML / HyperFrames page | L1 text size, L2 WCAG contrast against the real pixels under the text, L3 platform safe zone, L4 text clipped by the frame, L5 reading time; warns on overlapping text, page chrome and the slide-deck look (kicker over headline, left-anchored slide layout, typed headline, progress bar, stock UI card), FAIL with `--strict-style` |
 | `review.py` | any MP4 (also Remotion, editors) | R1 render, R2 dead air and mid-film freezes, R3 ending (end hold, exit move), R4 flashes (WCAG-style), R5 detail inside the safe-zone margins, R6 loudness, true peak, silent tail, fade-out; writes a contact sheet with the margins drawn |
 | `ledger.py` | the film's ingredients | rejects a combination that repeats the brand's recent films or any rejected one; suggests unused options |
 | `master.py` | MP4 or audio | two-pass loudness normalisation to a delivery target, fade-out, video copied |
@@ -92,6 +92,8 @@ MIT. See `LICENSE` and `NOTICE`.
 **Instalação:** clone o repositório na pasta de skills do seu agente e rode `node scripts/doctor.mjs`. Se o navegador não for achado, defina `CHROME_PATH`.
 
 **Fluxo:** briefing em quatro linhas, três ideias de tipos diferentes e uma escolhida, `ledger.py check` contra os últimos filmes da marca, storyboard com o que cada beat faz o espectador acreditar, o beat mais difícil primeiro, rascunho, `probe.mjs` e `review.py`, correção, som com `master.py`, revisão final e `NOTE.md` com os números. O veredito de quem assistiu entra no ledger, e uma combinação reprovada fica bloqueada para sempre.
+
+**Cara de slide:** o `probe.mjs` avisa quando o filme parece apresentação ou tela de aplicativo genérica: linha pequena em cima do título (W3), título encostado à esquerda com mídia, subtítulo ou duas linhas (W4), título digitado letra a letra (W5), barra de progresso (W6) e cartão de interface com saudação, bolinha de status, "rótulo · valor" ou texto cinza (W7). É aviso; `--strict-style` reprova e `--skip W4,W6` desliga regra por regra. Quando o padrão é a ideia, marque o elemento com `data-allow-<nome>` ou `data-ui` e explique no `NOTE.md`.
 
 **Português na tela:** o texto em português ocupa mais espaço que o inglês; planeje o layout no texto final, corte palavras antes de diminuir a letra e use `toLocaleString('pt-BR')` para números.
 

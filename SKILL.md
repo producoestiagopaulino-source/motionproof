@@ -59,7 +59,7 @@ node "SKILL/scripts/render.mjs" film/index.html film/draft.mp4 --scale 0.5
 node "SKILL/scripts/probe.mjs" film/index.html --zones reels
 python "SKILL/scripts/review.py" film/draft.mp4 --zones reels --expect <seconds> --exit-required
 ```
-`probe.mjs` reads the live DOM (HTML and HyperFrames): L1 size, L2 contrast, L3 safe zone, L4 clipped text, L5 reading time. `review.py` reads the pixels of any MP4 (also Remotion and edited files): R1 render, R2 dead air, R3 ending, R4 flashes, R5 safe-zone pixels, R6 sound. Open `sheet.jpg` from the review folder: the red bands are the platform margins. Describe every sheet frame in one sentence (what is on screen, where the eye goes) before you judge anything.
+`probe.mjs` reads the live DOM (HTML and HyperFrames): L1 size, L2 contrast, L3 safe zone, L4 clipped text, L5 reading time; it also warns on the slide-deck look (W3 kicker over headline, W4 slide layout, W5 typed headline, W6 progress bar, W7 stock UI card). Add `--strict-style` when the brief asks for cinema, not interface; a pattern that is the idea gets `data-allow-<name>` or `data-ui` and a line in `NOTE.md` (table in `references/review.md`). `review.py` reads the pixels of any MP4 (also Remotion and edited files): R1 render, R2 dead air, R3 ending, R4 flashes, R5 safe-zone pixels, R6 sound. Open `sheet.jpg` from the review folder: the red bands are the platform margins. Describe every sheet frame in one sentence (what is on screen, where the eye goes) before you judge anything.
 
 Fix in this order: untrue or broken; the idea; the handoffs between beats; hierarchy and scale; timing; surface; sound. A FAIL is fixed, never argued. A WARN is looked at and either fixed or explained in `NOTE.md`.
 
@@ -83,7 +83,7 @@ Write `NOTE.md`: the idea and why; each beat and what it buys; what is real and 
 - More than three flashes in any second.
 - A finished frame held past the end-hold limit; a frozen picture in the middle; an ending that just stops (use an exit move and a sound fade).
 - The same track, concept or exit as the brand's last film.
-- Page chrome as decoration: corner labels, "01 / 04" counters, timecodes, progress bars. Allowed only when it is the idea itself (a control room, a countdown): then mark it `data-diegetic` and say why in `NOTE.md`.
+- Page chrome as decoration: corner labels, "01 / 04" counters, timecodes, progress bars. Allowed only when it is the idea itself (a control room, a countdown): then mark it `data-diegetic` (or `data-ui` for a real product screen) and say why in `NOTE.md`.
 - Invented numbers, testimonials or interfaces shown as real.
 
 ## Files

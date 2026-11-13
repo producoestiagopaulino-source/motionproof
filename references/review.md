@@ -12,7 +12,18 @@ A gate is a floor. Passing all of them means nothing is broken in the ways a scr
 | L5 reading time | a text block fully visible for less than 0.5 s + characters / 17 | assumes one reader pace |
 | W1 overlap | two visible text blocks overlap (ghost text from a previous scene) | warning only |
 | W2 chrome | small corner text, tracked capitals, counters or timecodes | warning only; `data-diegetic` silences it |
-Opt-outs: `data-texture`, `data-diegetic`, `data-allow-unsafe`, `data-allow-crop`. Each one used must be explained in `NOTE.md`.
+
+### Style warnings (W3-W7): the film looks like a slide deck or a stock app screen
+WARN by default, FAIL with `--strict-style`, switched off one by one with `--skip W4,W6`. Text inside `data-diegetic` or `data-ui` (a declared interface surface: the product screen is the subject) never counts. Each rule has its own opt-out on the element or an ancestor.
+| rule | warns when | opt-out | blind spot |
+|---|---|---|---|
+| W3 kicker | a line at most 40 % of the headline's size sits right above it (gap up to one headline size), sharing its left edge or its centre, for 0.3 s or more; a headline is text of 5 % of the short side or larger | `data-allow-kicker` | an eyebrow drawn as an image |
+| W4 slide | a left-aligned headline starting in the left 20 % of the frame comes with media or a card on its right, a smaller subtitle under it, a kicker, or wraps to 2+ lines, for 1.2 s or more in a row | `data-allow-slide` | centred or right-aligned decks |
+| W5 typed | the same element's text grows 5+ times by at most 4 characters, each state a prefix of the next, 8+ characters in all (a trailing caret is ignored) | `data-allow-typing` | letters revealed by opacity, clip-path or a mask |
+| W6 progress | an element with no text, under 1.2 % of the short side thick, grows along its length 5+ times over 1 s or more, never shrinking, by 15 % of the frame or more | `data-allow-progress` | bars drawn in SVG strokes or canvas |
+| W7 stock card | a rounded card with a fill holds 2+ of: a greeting ("bom dia", "good morning", "olá,"), a "label · value" line, a coloured status dot, zinc-grey text, for 0.3 s or more | `data-allow-card` | cards built from images |
+
+Opt-outs: `data-texture`, `data-diegetic`, `data-ui`, `data-allow-unsafe`, `data-allow-crop`, `data-allow-kicker`, `data-allow-slide`, `data-allow-typing`, `data-allow-progress`, `data-allow-card`. Each one used must be explained in `NOTE.md`.
 
 ## review.py (any MP4)
 | gate | fails when |
