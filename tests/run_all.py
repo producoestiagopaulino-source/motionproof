@@ -65,6 +65,10 @@ def build(tmp):
     marks = ",".join("drawbox=x=%d:y=40:w=5:h=34:color=white:t=fill" % (60 + 13 * k) for k in range(30))
     mover("edge.mp4", 4, wave, post=marks)                                                        # text-like marks in the top margin
     mover("loud.mp4", 4, wave, audio=(440, "volume=12dB,alimiter=limit=1:level=false"))
+    # dense soundtrack: quiet pink noise under sparse hard clicks (-2 dBFS peaks), so loudnorm has to boost it and the peaks overshoot
+    ff("-f", "lavfi", "-i", "testsrc=s=320x240:d=5:r=30", "-f", "lavfi", "-i", "anoisesrc=c=pink:d=5:r=48000:a=0.1",
+       "-f", "lavfi", "-i", "aevalsrc='if(lt(mod(t,0.4),0.002),0.8,0)':s=48000:d=5", "-filter_complex", "[1][2]amix=inputs=2:normalize=0[a]",
+       "-map", "0:v", "-map", "[a]", *enc, "-c:a", "aac", "-b:a", "256k", j("dense.mp4"))
     ff("-f", "lavfi", "-i", "color=c=black:s=%s:d=3:r=30" % s, *enc, j("black.mp4"))
     # full-frame black/white alternation at 5 Hz (10 transitions per second)
     ff("-f", "lavfi", "-i", "color=c=black:s=%s:d=3:r=30,geq=lum='if(lt(mod(N\\,6)\\,3)\\,16\\,235)':cb=128:cr=128" % s, *enc, j("flash.mp4"))
@@ -119,6 +123,12 @@ def main():
         expect("review: loud soundtrack fails R6", rv("loud.mp4"), 1, r"^R6 sound \(reels\)\s+FAIL")
         expect("review: unfaded soundtrack fails --fade-required", rv("good-raw.mp4", "--fade-required"), 1, r"no fade-out")
         expect("master: normalise and fade", [PY, os.path.join(S, "master.py"), j("good-raw.mp4"), j("good.mp4"), "--target", "reels"], 0, r"out -1[3-5]\.\d LUFS")
+        out = expect("master: dense track gets under the true-peak target", [PY, os.path.join(S, "master.py"), j("dense.mp4"), j("dense-m.mp4"), "--target", "reels"], 0, r"true peak -?[\d.]+ dBTP")
+        m = re.search(r"true peak (-?[\d.]+) dBTP", out)
+        rc, dd = sh(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", j("dense-m.mp4")])
+        okd = bool(m) and rc == 0 and float(m.group(1)) <= -2.0 + 0.2 and abs(float(dd.split()[0]) - 5.0) < 0.1
+        results.append(("master: dense TP <= target+0.2 and duration 5 s", okd))
+        print("%s  master: dense TP %s, duration %s" % ("PASS" if okd else "FAIL", m.group(1) if m else "?", dd.strip()))
         expect("review: mastered film passes R6 with fade", rv("good.mp4", "--expect-audio", "--fade-required", "--expect", "4"), 0, r"^R6 sound \(reels\)\s+PASS")
         prof = j("profile.json")
         with open(prof, "w", encoding="utf-8") as f:
