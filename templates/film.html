@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Film</title>
+<!-- Copy this file and kit.js into your film folder. Change W/H in three places: the CSS vars, and MP.film({...}).
+     Formats: 1080x1920 (9:16), 1080x1350 (4:5), 1080x1080 (1:1), 1920x1080 (16:9). Open with ?safe to see the safe zone. -->
+<style>
+:root {
+  --w: 1080px; --h: 1920px;
+  --ground: #0b1020;   /* main ground: a surface, not a swatch; add light and texture in the scene */
+  --ink: #f4f6fb;
+  --accent: #ff8a00;   /* ONE accent with ONE meaning. Write it here: accent = ______ */
+  --font: system-ui, "Segoe UI", Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; width: var(--w); height: var(--h); overflow: hidden; background: #000; }
+#main { position: absolute; inset: 0; width: var(--w); height: var(--h); overflow: hidden; background: var(--ground); color: var(--ink); font-family: var(--font); }
+.scene { position: absolute; inset: 0; }
+.center { position: absolute; left: 0; right: 0; text-align: center; }
+#safe { position: absolute; inset: 0; pointer-events: none; display: none; }
+</style>
+</head>
+<body>
+<div id="main">
+  <!-- BEAT 1  hook: already moving on frame 0 -->
+  <section id="s1" class="scene">
+    <div id="hook" class="center" style="top: 820px; font-size: 96px; font-weight: 700; line-height: 1.1">Uma frase.</div>
+  </section>
+  <!-- BEAT 2  proof: the product doing the thing -->
+  <section id="s2" class="scene">
+    <div id="proof" class="center" style="top: 860px; font-size: 72px">A prova acontece aqui.</div>
+  </section>
+  <!-- BEAT 3  close: mark and call to action, ends on an exit move -->
+  <section id="s3" class="scene">
+    <div id="mark" class="center" style="top: 880px; font-size: 110px; font-weight: 800; color: var(--accent)">Marca</div>
+  </section>
+  <svg id="safe" viewBox="0 0 1080 1920"><rect id="safeRect" fill="none" stroke="#ff0050" stroke-width="4" stroke-dasharray="16 10"/></svg>
+</div>
+<script src="./kit.js"></script>
+<script>
+const film = MP.film({ root: '#main', fps: 30, duration: 6, width: 1080, height: 1920 });
+film.tween('#hook', { at: 0, frames: 12, from: { y: 60, scale: 1.4, opacity: 0.2 }, to: {}, curve: 'landFirm' })
+    .tween('#hook', { at: 40, frames: 20, from: { scale: 1 }, to: { scale: 1.04 }, curve: 'linear' })
+    .cut(60, { hide: ['#s1'], show: ['#s2'] })
+    .tween('#proof', { at: 60, frames: 12, from: { x: 120 }, to: {}, curve: 'land' })
+    .tween('#proof', { at: 72, frames: 48, from: { x: 0 }, to: { x: -20 }, curve: 'linear' })
+    .cut(120, { hide: ['#s2'], show: ['#s3'] })
+    .tween('#mark', { at: 120, frames: 10, from: { scale: 3 }, to: {}, curve: 'landFirm' })
+    .tween('#mark', { at: 130, frames: 30, from: { scale: 1 }, to: { scale: 0.96 }, curve: 'linear' })
+    .tween('#mark', { at: 165, frames: 15, from: {}, to: { scale: 0.2, opacity: 0, blur: 12 }, curve: 'exit' })
+    .ready();
+if (/safe/.test(location.search)) {   // preview aid only, never in a render
+  const z = { top: 0.115, bottom: 0.22, left: 0.12, right: 0.12 };   // data/zones.json "reels"
+  const r = document.getElementById('safeRect');
+  r.setAttribute('x', 1080 * z.left); r.setAttribute('y', 1920 * z.top);
+  r.setAttribute('width', 1080 * (1 - z.left - z.right)); r.setAttribute('height', 1920 * (1 - z.top - z.bottom));
+  document.getElementById('safe').style.display = 'block';
+}
+if (/play/.test(location.search)) film.play();
+</script>
+</body>
+</html>

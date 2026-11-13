@@ -1,0 +1,12 @@
+{
+  "_about": "Safe zones as fractions of the frame (margin from each edge that text and the focal action must stay out of). Platform overlays change over time: edit these numbers, not the scripts. Values are working approximations, not platform guarantees.",
+  "reels":   { "size": [1080, 1920], "top": 0.115, "bottom": 0.22, "left": 0.12, "right": 0.12 },
+  "tiktok":  { "size": [1080, 1920], "top": 0.08,  "bottom": 0.25, "left": 0.06, "right": 0.15 },
+  "shorts":  { "size": [1080, 1920], "top": 0.09,  "bottom": 0.21, "left": 0.06, "right": 0.12 },
+  "story":   { "size": [1080, 1920], "top": 0.13,  "bottom": 0.17, "left": 0.06, "right": 0.06 },
+  "vertical":{ "size": [1080, 1920], "top": 0.13,  "bottom": 0.25, "left": 0.12, "right": 0.15 },
+  "feed45":  { "size": [1080, 1350], "top": 0.06,  "bottom": 0.08, "left": 0.06, "right": 0.06 },
+  "square":  { "size": [1080, 1080], "top": 0.06,  "bottom": 0.06, "left": 0.06, "right": 0.06 },
+  "wide":    { "size": [1920, 1080], "top": 0.05,  "bottom": 0.05, "left": 0.05, "right": 0.05 },
+  "none":    { "size": null,         "top": 0,     "bottom": 0,    "left": 0,    "right": 0 }
+}

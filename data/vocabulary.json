@@ -1,0 +1,12 @@
+{
+  "_about": "Values the ledger suggests per axis. Free text is accepted too; these lists only feed `ledger.py suggest`. Extend them per project.",
+  "concept":    ["ui-documentary", "single-held-shot", "character-gag", "typographic-essay", "real-output-montage", "stillness-that-breaks", "object-journey", "before-after-match-cut", "diagram-that-builds", "countdown", "map-or-plan", "process-macro", "split-screen-race", "letter-or-note", "data-as-object"],
+  "opening":    ["mid-motion-object", "single-word-crash", "sound-first-black", "extreme-macro", "camera-already-moving", "question-typed-in-product", "silhouette-reveal", "number-in-motion", "hands-or-cursor-acting"],
+  "transition": ["match-cut", "object-carries-across", "push-through", "whip-pan", "mask-by-shape", "zoom-into-detail", "hard-cut-on-beat", "light-sweep", "fold-or-flip", "layer-separation", "dolly-through"],
+  "camera":     ["locked", "slow-creep", "orbit", "dolly", "snap-zoom", "rack-focus", "top-down", "handheld-sway"],
+  "type":       ["neo-grotesk", "serif-display", "condensed", "mono-ui", "brand-face", "hand-drawn"],
+  "palette":    ["brand-dark", "brand-light", "duotone", "paper", "neon-on-black", "photo-led", "monochrome-accent"],
+  "texture":    ["clean-vector", "grain", "paper", "glass", "metal", "blueprint", "halftone", "volumetric-light"],
+  "track":      [],
+  "exit":       ["shrink-to-mark", "iris-on-logo", "light-wipe", "curtain", "glitch-out", "push-out-to-black", "type-collapse", "camera-pull-away", "scan-line", "particles-to-mark"]
+}
