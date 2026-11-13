@@ -71,6 +71,36 @@ def build(tmp):
     return j
 
 
+STYLE = {"W3": "kicker.html", "W4": "slide.html", "W5": "typing.html", "W6": "progress.html", "W7": "card.html"}
+
+
+def style_tests(P):
+    """W3-W7: each fixture raises its own style warning and none of the others; opt-outs, --skip and --strict-style."""
+    def statuses(f, *a):
+        rc, out = sh(P(f, "--json", *a))
+        try:
+            return rc, {r["id"]: r["status"] for r in json.loads(out[out.index("{"):])["rules"]}
+        except ValueError:
+            return rc, {}
+
+    def check(name, ok):
+        results.append((name, ok))
+        print("%s  %s" % ("PASS" if ok else "FAIL", name))
+
+    for rule, f in STYLE.items():
+        rc, st = statuses(f)
+        check("probe: %s warns %s only (exit 0)" % (f, rule),
+              rc == 0 and st.get(rule) == "WARN" and all(st.get(k) == "PASS" for k in STYLE if k != rule))
+    for f in ("good.html", "allowed.html"):
+        rc, st = statuses(f)
+        check("probe: %s raises no style warning" % f, rc == 0 and bool(st) and all(st.get(k) == "PASS" for k in STYLE))
+    rc, st = statuses("kicker.html", "--strict-style")
+    check("probe: --strict-style turns W3 into FAIL (exit 1)", rc == 1 and st.get("W3") == "FAIL")
+    rc, st = statuses("card.html", "--strict-style", "--skip", "W7,W4")
+    check("probe: --skip turns W7 off even with --strict-style", rc == 0 and st.get("W7") == "SKIP" and st.get("W4") == "SKIP")
+    expect("probe: --skip refuses FAIL rules", P("good.html", "--skip", "L1"), 2, r"--skip takes warning rules")
+
+
 def main():
     keep = "--keep" in sys.argv
     tmp = tempfile.mkdtemp(prefix="motionproof-test-")
@@ -151,6 +181,7 @@ def main():
             expect("probe: counter label warns W2", P("chrome.html"), 0, r"^W2 .*WARN")
             expect("probe: data-diegetic silences W2", P("diegetic.html"), 0, r"^W2 .*PASS")
             expect("probe: zones=none ignores margins", P("unsafe.html", "--zones", "none"), 0, r"GATE probe: PASS")
+            style_tests(P)
             out_mp4 = j("template.mp4")
             expect("render: template to mp4", ["node", os.path.join(S, "render.mjs"), os.path.join(ROOT, "templates", "film.html"), out_mp4], 0, r"180 frames\s+1080x1920@30")
             expect("render: stills", ["node", os.path.join(S, "render.mjs"), os.path.join(ROOT, "templates", "film.html"), "--still", "0.5,3", "--out", j("stills")], 0, r"still-3_00\.png")

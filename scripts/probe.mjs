@@ -2,7 +2,7 @@
 // probe.mjs - measure what a viewer can read in an HTML film (plain HTML, kit.js or HyperFrames). Reads the live DOM while seeking.
 //
 // Usage: node probe.mjs <film.html> [--zones auto|reels|tiktok|shorts|story|vertical|feed45|square|wide|none]
-//                       [--samples 12] [--step 0.1] [--min-text 0.031] [--min-hold 0.3] [--json] [--duration S]
+//                       [--samples 12] [--step 0.1] [--min-text 0.031] [--min-hold 0.3] [--json] [--duration S] [--strict-style] [--skip W3,W4]
 // L1, L3 and L4 count only when the problem lasts at least --min-hold seconds (a move through a margin is not a layout).
 //
 // FAIL rules (exit 1):
@@ -12,8 +12,10 @@
 //   L4 clipped text        a text block cut by the frame edge or by an ancestor with overflow hidden
 //   L5 too short to read   a text block fully visible for less than 0.5 s + characters / 17 (seconds)
 // WARN rules: W1 overlapping text blocks (ghost text), W2 page chrome (corner micro-label, tracked caps, counter, timecode).
-// Opt-outs on an element or ancestor: data-texture (illegible on purpose: skips L1, L2, L5), data-diegetic (skips W2),
-//   data-allow-unsafe (skips L3), data-allow-crop (skips L4).
+// Style WARN rules (scripts/style.mjs, FAIL with --strict-style, off with --skip W3,W5): W3 kicker over headline, W4 slide layout,
+//   W5 typed headline, W6 progress bar, W7 stock UI card.
+// Opt-outs on an element or ancestor: data-texture (illegible on purpose: skips L1, L2, L5), data-diegetic and data-ui (skip W2-W7),
+//   data-allow-unsafe (skips L3), data-allow-crop (skips L4), data-allow-kicker|slide|typing|progress|card (W3-W7).
 // Text drawn in canvas, WebGL, images or video is invisible here: review.py checks the rendered pixels for those.
 // Exit: 0 pass (warnings allowed), 1 a rule failed, 2 bad usage or the page failed.
 import fs from 'node:fs';
@@ -21,14 +23,17 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { launch, parseArgs, toUrl, PAGE_HELPERS } from './cdp.mjs';
+import { RULES, PAGE_STYLE, EXTRAS, makeStyle } from './style.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 let pos, opt;
-try { ({ pos, opt } = parseArgs(process.argv.slice(2), { zones: 's', samples: 's', step: 's', 'min-text': 's', 'min-hold': 's', json: 'bool', duration: 's', help: 'bool' })); }
+try { ({ pos, opt } = parseArgs(process.argv.slice(2), { zones: 's', samples: 's', step: 's', 'min-text': 's', 'min-hold': 's', json: 'bool', duration: 's', 'strict-style': 'bool', skip: 's', help: 'bool' })); }
 catch (e) { console.error('error: ' + e.message); process.exit(2); }
-if (opt.help || !pos[0]) { console.log('node probe.mjs <film.html> [--zones auto] [--samples 12] [--step 0.1] [--json]'); process.exit(opt.help ? 0 : 2); }
+if (opt.help || !pos[0]) { console.log('node probe.mjs <film.html> [--zones auto] [--samples 12] [--step 0.1] [--strict-style] [--skip W3,W4] [--json]'); process.exit(opt.help ? 0 : 2); }
 const ZONES = JSON.parse(fs.readFileSync(path.join(HERE, '..', 'data', 'zones.json'), 'utf8'));
 const minText = Number(opt['min-text'] ?? 0.031);
+const skip = new Set(String(opt.skip || '').toUpperCase().split(',').map((s) => s.trim()).filter(Boolean));
+for (const k of skip) if (!/^W\d$/.test(k)) { console.error(`error: --skip takes warning rules (W1-W7), not ${k}`); process.exit(2); }
 
 // ---- PNG decode (8-bit RGB/RGBA, non-interlaced: what Chrome writes)
 function decodePng(buf) {
@@ -61,8 +66,7 @@ const ratio = (a, b) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
 // ---- page side: visible text blocks
 const SCAN = String.raw`(() => {
   const W = innerWidth, H = innerHeight, cs = (e) => getComputedStyle(e);
-  const ids = window.__mpIds || (window.__mpIds = new WeakMap()); let n = window.__mpN || 0;
-  const id = (e) => { let v = ids.get(e); if (!v) { v = ++n; ids.set(e, v); window.__mpN = n; } return v; };
+  const id = window.__mpId;
   const opa = (e) => { let o = 1; for (let x = e; x && x.nodeType === 1; x = x.parentElement) o *= parseFloat(cs(x).opacity); return o; };
   const shown = (e) => { for (let x = e; x && x !== document.documentElement; x = x.parentElement) { const s = cs(x); if (s.display === 'none' || s.visibility === 'hidden') return false; } return true; };
   const flag = (e, a) => !!e.closest('[' + a + ']');
@@ -99,7 +103,8 @@ const SCAN = String.raw`(() => {
       fs: g.fs, color: g.color,
       ls: (() => { const s = cs(g.c); return s.letterSpacing === 'normal' ? 0 : parseFloat(s.letterSpacing) / g.fs; })(),
       upper: cs(g.c).textTransform === 'uppercase' || (g.parts.join('').replace(/[^A-Za-z]/g, '').length >= 3 && g.parts.join('') === g.parts.join('').toUpperCase()),
-      texture: flag(g.c, 'data-texture'), diegetic: flag(g.c, 'data-diegetic'), unsafeOk: flag(g.c, 'data-allow-unsafe'), cropOk: flag(g.c, 'data-allow-crop'),
+      texture: flag(g.c, 'data-texture'), diegetic: flag(g.c, 'data-diegetic'), ui: flag(g.c, 'data-ui'), allow: window.__mpAllow(g.c),
+      align: cs(g.c).textAlign, card: window.__mpCard(g.c), unsafeOk: flag(g.c, 'data-allow-unsafe'), cropOk: flag(g.c, 'data-allow-crop'),
       tag: '<' + g.c.tagName.toLowerCase() + (g.c.id ? '#' + g.c.id : '') + '>' });
   }
   return out;
@@ -110,6 +115,7 @@ const SHOW_TEXT = `(() => { const s = document.getElementById('__mpHide'); if (s
 const hits = new Map();   // rule -> Map(key -> hit)
 const SEV = { L1: 'FAIL', L2: 'FAIL', L3: 'FAIL', L4: 'FAIL', L5: 'FAIL', W1: 'WARN', W2: 'WARN' };
 const NAMES = { L1: 'text too small', L2: 'low contrast', L3: 'outside safe zone', L4: 'clipped text', L5: 'too short to read', W1: 'overlapping text', W2: 'page chrome' };
+for (const [k, r] of Object.entries(RULES)) { SEV[k] = opt['strict-style'] ? 'FAIL' : 'WARN'; NAMES[k] = r.name; }
 const add = (rule, key, t, d) => { const m = hits.get(rule) || new Map(); const h = m.get(key) || { ...d, times: [] }; if (!h.times.includes(t)) h.times.push(t); m.set(key, h); hits.set(rule, m); };
 const r3 = (v) => +v.toFixed(3);
 
@@ -119,6 +125,7 @@ try {
   const { page } = br;
   await page.goto(toUrl(pos[0]));
   await page.eval(PAGE_HELPERS);
+  await page.eval(PAGE_STYLE);
   await page.eval('window.__mpPrepare()');
   const info = await page.eval('window.__mpInfo()');
   const W = info.width || 1920, H = info.height || 1080, S = Math.min(W, H);
@@ -134,6 +141,7 @@ try {
   const step = Number(opt.step ?? 0.1), nS = Math.max(4, Number(opt.samples ?? 12));
   const sparse = new Set(Array.from({ length: nS }, (_, i) => +(((i + 0.5) * dur) / nS).toFixed(2)));
   const times = new Set(sparse); for (let t = 0; t < dur; t += step) times.add(+t.toFixed(2));
+  const style = makeStyle({ W, H, step, add, skip });
   const runs = new Map();   // block id -> { text, cur: start|null, best, req }
   for (const t of [...times].sort((a, b) => a - b)) {
     await page.eval(`window.__mpSeek(${t})`);
@@ -151,9 +159,10 @@ try {
       if (!b.cropOk && b.vis < 0.98) add('L4', b.id, t, { ...d, note: `only ${(b.vis * 100).toFixed(0)}% of the text box is visible` });
       const small = b.fs < 0.045 * S, corner = ((b.x1 < 0.25 * W) || (b.x0 > 0.75 * W)) && ((b.y1 < 0.15 * H) || (b.y0 > 0.85 * H));
       const chrome = /\b\d{1,2}\s*[\/|]\s*\d{1,2}\b|\b\d{1,2}:\d{2}(:\d{2})?\b|\b(fps|bpm|rec|scene|chapter|cap[ií]tulo|cena)\s*\d*/i.test(b.text);
-      if (!b.diegetic && small && (corner || (b.upper && b.ls >= 0.08) || chrome))
+      if (!b.diegetic && !b.ui && small && (corner || (b.upper && b.ls >= 0.08) || chrome))
         add('W2', b.id, t, { ...d, note: corner ? 'small text in a corner' : chrome ? 'counter, timecode or production label' : 'small tracked caps label' });
     }
+    style.sample(t, blocks, await page.eval(EXTRAS));
     for (let i = 0; i < blocks.length; i++) for (let j = i + 1; j < blocks.length; j++) {
       const a = blocks[i], b = blocks[j]; if (a.minOp < 0.3 || b.minOp < 0.3) continue;
       const ix = Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)), iy = Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
@@ -186,18 +195,20 @@ try {
 
   // geometry rules count only when the problem lasts (text flying through a margin or arriving from oversize is motion, not layout)
   const minHold = Number(opt['min-hold'] ?? 0.3);
-  for (const k of ['L1', 'L3', 'L4']) for (const [key, h] of hits.get(k) || []) {
+  style.finish();
+  for (const k of ['L1', 'L3', 'L4', 'W3', 'W7']) for (const [key, h] of hits.get(k) || []) {
     const n = h.times.filter((t) => Math.abs(t / step - Math.round(t / step)) < 1e-6).length;
     if (n * step + 1e-6 < minHold) hits.get(k).delete(key); else h.note += `; lasts ~${(n * step).toFixed(1)} s`;
   }
-  const rules = Object.keys(SEV).map((k) => ({ id: k, name: NAMES[k], status: hits.get(k)?.size ? SEV[k] : 'PASS', hits: [...(hits.get(k)?.values() || [])] }));
+  const rules = Object.keys(SEV).map((k) => skip.has(k) ? { id: k, name: NAMES[k], status: 'SKIP', hits: [] }
+    : { id: k, name: NAMES[k], status: hits.get(k)?.size ? SEV[k] : 'PASS', hits: [...(hits.get(k)?.values() || [])] });
   const gate = rules.some((r) => r.status === 'FAIL') ? 'FAIL' : 'PASS';
-  const out = { file: path.resolve(pos[0]), width: W, height: H, duration: dur, zones: zname, minTextPx: Math.round(minText * S), gate, rules };
+  const out = { file: path.resolve(pos[0]), width: W, height: H, duration: dur, zones: zname, minTextPx: Math.round(minText * S), strictStyle: !!opt['strict-style'], gate, rules };
   if (opt.json) console.log(JSON.stringify(out, null, 1));
   else {
     console.log(`probe ${out.file}  ${W}x${H}  ${dur}s  zones=${zname}  min text ${out.minTextPx} px`);
     for (const r of rules) {
-      console.log(`${r.id} ${r.name.padEnd(20, '.')} ${r.status}${r.hits.length ? '  (' + r.hits.length + ')' : ''}`);
+      console.log(`${r.id} ${r.name.padEnd(22, '.')} ${r.status}${r.hits.length ? '  (' + r.hits.length + ')' : ''}`);
       for (const h of r.hits.slice(0, 5)) console.log(`    t=${h.times.slice(0, 4).join(',')}${h.times.length > 4 ? ',...' : ''}  ${JSON.stringify(h.text.slice(0, 50))} ${h.el} ${h.bbox.length ? '[' + h.bbox.join(',') + ']' : ''}${h.note ? '  ' + h.note : ''}`);
     }
     console.log('GATE probe: ' + gate);
