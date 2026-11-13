@@ -1,0 +1,17 @@
+motionproof
+Copyright (c) 2026 Project X. Released under the MIT License (see LICENSE).
+
+Inspiration
+-----------
+The idea of pairing a direction method for motion graphics with scripts that check the rendered film was
+inspired by the open-source project "motionmaxxing" (https://github.com/Tejashmakwana/motionmaxxing),
+licensed under the Apache License 2.0.
+
+motionproof is an independent implementation written from scratch. It contains no source code, text,
+data, fonts, images or third-party libraries from that project. Its scripts, runtime, rules, thresholds,
+references and test fixtures are original work.
+
+Third-party software
+--------------------
+None is bundled. At run time motionproof calls programs installed on the user's machine: Node.js,
+Python, FFmpeg and, for HTML films only, a Chromium-based browser (Google Chrome or Microsoft Edge).
