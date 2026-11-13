@@ -1,4 +1,5 @@
 {
   "target": "reels",
-  "exit_required": true
+  "exit_required": true,
+  "freeze_max": 2.5
 }
