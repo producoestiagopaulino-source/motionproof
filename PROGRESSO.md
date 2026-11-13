@@ -5,10 +5,10 @@
 - Scripts: doctor, render (HTML para MP4 via Chrome/Edge), probe (DOM: tamanho, contraste, zona segura, corte, tempo de leitura), review (MP4: R1 a R6), master (loudness em dois passes, limitador se o pico passar do alvo, duracao igual a do video, fade), beats, ledger (anti-repeticao).
 - Adaptadores Remotion (TypeScript) e HyperFrames.
 - Regras de layout W3 a W7 no probe (kicker sobre headline, layout de slide, headline digitada, barra de progresso, cartao de interface generico): avisos por padrao, `--strict-style` reprova, `--skip` e `data-allow-*` desligam.
-- Bateria offline: `python tests/run_all.py` com 52 testes passando.
+- Bateria offline: `python tests/run_all.py` com 52 testes passando (com o teste novo de trilha densa; a rodada com `--skip-browser` deu 31 passados, 0 falhas).
 - Repositorio publico: https://github.com/producoestiagopaulino-source/motionproof (ramo main).
 
-- master.py: trilha densa nao fica mais acima do pico alvo (alimiter + nova medicao, ate 4 tentativas; sai com codigo 1 se nao chegar) e a saida tem a duracao do video de entrada. Teste `dense.mp4` na bateria.
+- master.py: trilha densa nao fica mais acima do pico alvo (alimiter + nova medicao, ate 4 tentativas; sai com codigo 1 se nao chegar) e a saida tem a duracao do video de entrada. Teste `dense.mp4` na bateria. Validado no ReelSistemas8: -14,1 LUFS, pico -2,7 dBTP, 25,301 s (commit f50a383).
 
 ## Em aberto
 - Revisao cega A/B, captura de marca por site, voz, efeitos e musica, regra de flash vermelho.
