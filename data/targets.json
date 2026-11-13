@@ -1,0 +1,11 @@
+{
+  "_about": "Loudness delivery targets: integrated LUFS and maximum true peak (dBTP). Platforms normalise playback, so these are what avoids being turned down or clipping on encode. Edit freely.",
+  "reels":     { "lufs": -14, "tp": -1.0 },
+  "tiktok":    { "lufs": -14, "tp": -1.0 },
+  "shorts":    { "lufs": -14, "tp": -1.0 },
+  "youtube":   { "lufs": -14, "tp": -1.0 },
+  "web":       { "lufs": -16, "tp": -1.0 },
+  "podcast":   { "lufs": -16, "tp": -1.0 },
+  "broadcast": { "lufs": -23, "tp": -1.0 },
+  "tolerance_lu": 1.5
+}
